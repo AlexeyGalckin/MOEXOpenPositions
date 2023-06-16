@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TigerTrade.Chart.Indicators.Custom
 {
-    public class MOEXOpenPositions
+    public class MOEXOpenPositionsIndicator
     {
     }
 }

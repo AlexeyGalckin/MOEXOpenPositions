@@ -5,6 +5,8 @@ VisualStudioVersion = 17.6.33801.468
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MOEXOpenPositions", "MOEXOpenPositions\MOEXOpenPositions.csproj", "{09DCA986-F00B-48C3-9EE8-3AB6007769FB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MOEXOpenPositionsApp", "MOEXOpenPositionsApp\MOEXOpenPositionsApp.csproj", "{C90B72F7-31C2-413A-87EB-3FBC69E92AC7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{09DCA986-F00B-48C3-9EE8-3AB6007769FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{09DCA986-F00B-48C3-9EE8-3AB6007769FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{09DCA986-F00B-48C3-9EE8-3AB6007769FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C90B72F7-31C2-413A-87EB-3FBC69E92AC7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C90B72F7-31C2-413A-87EB-3FBC69E92AC7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C90B72F7-31C2-413A-87EB-3FBC69E92AC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C90B72F7-31C2-413A-87EB-3FBC69E92AC7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
