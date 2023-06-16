@@ -7,8 +7,11 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+
 namespace TigerTrade.Chart.Indicators.Custom
 {
+    using Entry = Tuple<DateTime, int>;
+    using Data = List<Tuple<DateTime, int>>;
     interface IMOEXClient
     {
         void Update();
@@ -21,7 +24,21 @@ namespace TigerTrade.Chart.Indicators.Custom
         private const string _base = "https://iss.moex.com/iss/analyticalproducts/futoi/securities/{0}.csv";
         public bool Get(DateTime time, out long value)
         {
-            throw new NotImplementedException();
+            /*
+            var i = _data.BinarySearch(_stor, new ComparableStorage());
+            //
+            if (i < 0)
+            {
+                i = ~i;
+                if (i >= _data.Count)
+                    --i;
+            }
+            //
+            return _data[i].Data;
+            */
+            value = 0;
+            //
+            return false;
         }
         public void Init(string symbol)
         {
@@ -40,10 +57,12 @@ namespace TigerTrade.Chart.Indicators.Custom
             //
             var t = l.Split('\n', ';');
             //
-            for(var i = Start; i < t.Length; i += Row)
+            for(var i = Start + Row; i < t.Length; i += Row * 2)
             {
-                var diff = t[i + 6];
-                var date = t[i + 11];
+                var diff = Convert.ToInt32(t[i + 6]);
+                var date = Convert.ToDateTime(t[i + 11]);
+                //
+                _data.Add(new Entry(date, diff));
             }
         }
         public void Update()
@@ -65,6 +84,8 @@ namespace TigerTrade.Chart.Indicators.Custom
             //
             return true;
         }
+        //
+        Data _data = new Data();
         //
         DateTime _last = DateTime.MinValue;
         //
