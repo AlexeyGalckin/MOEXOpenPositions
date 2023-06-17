@@ -82,8 +82,14 @@ namespace TigerTrade.Chart.Indicators.Custom
 
         protected override void Execute()
         {
-            _api.Init("NG");
-            _api.Update();
+            var sym = DataProvider.Symbol.ToString();
+            var exc = DataProvider.Symbol.Exchange.ToString();
+            //
+            if(exc == "MOEX")
+            {
+                _api.Init(sym);
+                _api.Update();
+            }
         }
 
         public override void Render(DxVisualQueue visual)
@@ -91,12 +97,10 @@ namespace TigerTrade.Chart.Indicators.Custom
             var symbol = DataProvider.Symbol;
             var points = new Point[Canvas.Count];
 
-             
             for (var i = 0; i < Canvas.Count; i++)
             {
                 var index = Canvas.GetIndex(i);
-
-
+                //
                 var x = Canvas.GetX(index);
                 //
                 var d = Canvas.IndexToDate(index);
@@ -114,7 +118,6 @@ namespace TigerTrade.Chart.Indicators.Custom
         public override void ApplyColors(IChartTheme theme)
         {
             LineColor = theme.GetNextColor();
-
             base.ApplyColors(theme);
         }
 

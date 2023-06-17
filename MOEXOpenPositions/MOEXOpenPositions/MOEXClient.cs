@@ -63,20 +63,31 @@ namespace TigerTrade.Chart.Indicators.Custom
             //
             var t = l.Split('\n', ';');
             //
-            for(var i = t.Length - Row*2 - End; i > Start; i -= Row * 2)
+            for(var i = t.Length - Row*2 - End; i >= Start; i -= Row * 2)
             {
                 var diff = Convert.ToInt32(t[i + 6]);
                 var date = Convert.ToDateTime(t[i + 11]);
+                //
+                if(_last > DateTime.MinValue && _data.Last().Item1 >= date)
+                    continue;
                 //
                 _data.Add(new Entry(date, diff));
                 //
                 if(diff > _max) _max = diff;
                 if(diff < _min) _min = diff;
             }
+            //
+            if(_data.Any())
+                _last = _data.Last().Item1;
         }
         public void Update()
         {
-            HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(_url);
+            var s = _url;
+            //
+            if (_last > DateTime.MinValue)
+                s += "?from=" + DateTime.Now.ToString("yyyy-MM-dd");
+            //
+            HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(s);
             //
             request.CookieContainer = new CookieContainer();
             request.CookieContainer.Add(_cookie);

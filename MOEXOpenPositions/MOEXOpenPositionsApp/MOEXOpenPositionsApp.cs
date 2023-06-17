@@ -13,6 +13,8 @@ namespace TigerTrade.Chart.Indicators.Custom
             //
             var t = new DateTime(2023, 6, 16, 21, 5, 0);
             var p = cli.Get(t);
+            //
+            cli.Update();
         }
     }
 }
