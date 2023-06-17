@@ -78,12 +78,12 @@ namespace TigerTrade.Chart.Indicators.Custom
             LineColor = Color.FromArgb(255, 0, 0, 255);
             LineWidth = 1;
             //
-            _api.Init("NG");
-            _api.Update();
         }
 
         protected override void Execute()
         {
+            _api.Init("NG");
+            _api.Update();
         }
 
         public override void Render(DxVisualQueue visual)
@@ -91,7 +91,7 @@ namespace TigerTrade.Chart.Indicators.Custom
             var symbol = DataProvider.Symbol;
             var points = new Point[Canvas.Count];
 
-
+             
             for (var i = 0; i < Canvas.Count; i++)
             {
                 var index = Canvas.GetIndex(i);
@@ -101,10 +101,9 @@ namespace TigerTrade.Chart.Indicators.Custom
                 //
                 var d = Canvas.IndexToDate(index);
                 //
-                long val = 0;
-                _api.Get(d, out val);
+                var v = _api.Get(d);
                 //
-                var y = Canvas.GetY(val);
+                var y = Canvas.GetY(v);
                 //
                 points[i] = new Point(x, y);
             }
