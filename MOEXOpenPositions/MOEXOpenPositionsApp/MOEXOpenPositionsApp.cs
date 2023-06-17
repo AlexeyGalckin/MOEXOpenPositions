@@ -6,15 +6,12 @@ namespace TigerTrade.Chart.Indicators.Custom
     {
         static void Main(string[] args)
         {
-            MOEXClient cli = new MOEXClient();
+            MOEXClient cli = new MOEXClientAsync();
             //
             cli.Init("NG");
-            cli.Update();
             //
             var t = new DateTime(2023, 6, 16, 21, 5, 0);
             var p = cli.Get(t);
-            //
-            cli.Update();
         }
     }
 }

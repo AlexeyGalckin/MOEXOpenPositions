@@ -88,7 +88,6 @@ namespace TigerTrade.Chart.Indicators.Custom
             if(exc == "MOEX")
             {
                 _api.Init(sym);
-                _api.Update();
             }
         }
 

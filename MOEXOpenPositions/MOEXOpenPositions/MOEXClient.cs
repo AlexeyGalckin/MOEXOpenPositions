@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Security.Policy;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 
 namespace TigerTrade.Chart.Indicators.Custom
@@ -14,7 +16,6 @@ namespace TigerTrade.Chart.Indicators.Custom
     using Data = List<Tuple<DateTime, int>>;
     interface IMOEXClient
     {
-        void Update();
         void Init(string symbol);
         long Get(DateTime time);
         bool GetMinMax(out double min, out double max);
@@ -34,6 +35,10 @@ namespace TigerTrade.Chart.Indicators.Custom
         {
             var e = new Entry(time, 0);
             //
+            return Get(e);
+        }
+        public virtual long Get(Entry e)
+        {
             var i = _data.BinarySearch(e, _comp);
             //
             if (i < 0)
@@ -50,6 +55,8 @@ namespace TigerTrade.Chart.Indicators.Custom
             _url = String.Format(_base, symbol);
             //
             _cookie = new Cookie("MicexPassportCert", _passport, "/", _domain);
+            //
+            Update();
         }
         void Parse(Stream s)
         {
@@ -71,7 +78,7 @@ namespace TigerTrade.Chart.Indicators.Custom
                 if(_last > DateTime.MinValue && _data.Last().Item1 >= date)
                     continue;
                 //
-                _data.Add(new Entry(date, diff));
+                Add(new Entry(date, diff));
                 //
                 if(diff > _max) _max = diff;
                 if(diff < _min) _min = diff;
@@ -80,7 +87,7 @@ namespace TigerTrade.Chart.Indicators.Custom
             if(_data.Any())
                 _last = _data.Last().Item1;
         }
-        public void Update()
+        virtual public void Update()
         {
             var s = _url;
             //
@@ -105,6 +112,11 @@ namespace TigerTrade.Chart.Indicators.Custom
             return true;
         }
         //
+        public virtual void Add(Entry entry)
+        {
+            _data.Add(entry);
+        }
+        //
         Data _data = new Data();
         //
         DateTime _last = DateTime.MinValue;
@@ -118,5 +130,34 @@ namespace TigerTrade.Chart.Indicators.Custom
         string _passport = "CWYRf4a4MYR1WzwdjEHKiQUAAAAIk2vp3llqix6hlne9tgCg8dspidbL5rGZgGkTM0HGD8X5_UMjHr-3s3l1nZSWZF1TAwdu1xpIiX2P28GdXg4X5dqx0vVZPcX6D3Cjvh_gNIpFdpUbpU8kUAvNf1i-aXH0zVRctDHR14eWQ71_JRkmtMIq7slboW1KQnm8wiFj-p30Ba4W0";
         //
         static Comparator _comp = new Comparator();
+    }
+    //
+    public class MOEXClientAsync : MOEXClient
+    {
+        public override void Update() 
+        {
+            base.Update();
+            //
+            _timer = new Timer(o => { base.Update(); }, null, TimeSpan.Zero, _interval);
+        }
+        public override void Add(Entry entry)
+        {
+            lock (_lock)
+            {
+                base.Add(entry);
+            }
+        }
+        public override long Get(Entry e)
+        {
+            lock (_lock)
+            {
+                return base.Get(e);
+            }
+        }
+        //
+        Timer _timer;
+        private readonly object _lock = new object();
+        //
+        static TimeSpan _interval = TimeSpan.FromMinutes(1);
     }
 }
