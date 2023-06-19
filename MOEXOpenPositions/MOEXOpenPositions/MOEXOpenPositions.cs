@@ -11,6 +11,8 @@ using TigerTrade.Chart.Indicators.Common;
 using TigerTrade.Chart.Indicators.Enums;
 using TigerTrade.Core.Utils.Time;
 using TigerTrade.Dx;
+using TigerTrade.Core.UI.Converters;
+using System.Reflection;
 
 namespace TigerTrade.Chart.Indicators.Custom
 {
@@ -62,7 +64,77 @@ namespace TigerTrade.Chart.Indicators.Custom
                 _lineWidth = value;
 
                 _linePen = new XPen(_lineBrush, _lineWidth);
+                OnPropertyChanged();
+            }
+        }
 
+        [DataMember(Name = "Passport")]
+        [Category("API"), DisplayName("MicexPassportCert")]
+        public string Passport
+        {
+            get => _api.Passport;
+            set
+            {
+                if (_api.Passport == value)
+                {
+                    return;
+                }
+
+                _api.Passport = value;
+                _changed = true;
+
+                OnPropertyChanged();
+            }
+        }
+
+        [TypeConverter(typeof(EntityType))]
+        [DataContract(Name = "EntityType", Namespace = "http://schemas.datacontract.org/2004/07/TigerTrade.Chart.Indicators.Custom")]
+        public enum EntityType
+        {
+            [EnumMember(Value = "Individual"), Description("Individuals directed position in contracts")]
+            Individual,
+            [EnumMember(Value = "Legal"), Description("Legal entities directed position in contracts")]
+            Legal
+        }
+
+        bool _changed = true;
+
+        [DataMember(Name = "Entity")]
+        [Category("API"), DisplayName("Legal entities")]
+        public EntityType Entity
+        {
+            get => _api.Legal ? EntityType.Legal : EntityType.Individual;
+            set
+            {
+                var b = (value == EntityType.Legal);
+
+                if (_api.Legal == b)
+                {
+                    return;
+                }
+
+                _api.Legal = b;
+                _changed = true;
+
+                OnPropertyChanged();
+            }
+        }
+
+        bool _debug = true;
+
+        [DataMember(Name = "Debug")]
+        [Category("API"), DisplayName("Debug Information")]
+        public bool Debug
+        {
+            get => _debug;
+            set
+            {
+                if (value == _debug)
+                {
+                    return;
+                }
+
+                _debug = value;
                 OnPropertyChanged();
             }
         }
@@ -78,17 +150,27 @@ namespace TigerTrade.Chart.Indicators.Custom
             LineColor = Color.FromArgb(255, 0, 0, 255);
             LineWidth = 1;
             //
+            Passport = "CWYRf4a4MYR1WzwdjEHKiQUAAAAIk2vp3llqix6hlne9tgCg8dspidbL5rGZgGkTM0HGD8X5_UMjHr-3s3l1nZSWZF1TAwdu1xpIiX2P28GdXg4X5dqx0vVZPcX6D3Cjvh_gNIpFdpUbpU8kUAvNf1i-aXH0zVRctDHR14eWQ71_JRkmtMIq7slboW1KQnm8wiFj-p30Ba4W0";
+            Entity = EntityType.Legal;
         }
-
         protected override void Execute()
         {
-            var sym = DataProvider.Symbol.ToString();
             var exc = DataProvider.Symbol.Exchange.ToString();
             //
             if(exc == "MOEX")
             {
-                _api.Init(sym);
+                var sym = DataProvider.Symbol.ToString();
+                if (_api.Symbol != sym || _changed)
+                {
+                    _api.Clear();
+                    _api.Symbol = sym;
+                    _api.Init();
+                }
+                //
+                if (!ClearData)
+                    _api.Update();
             }
+
         }
 
         public override void Render(DxVisualQueue visual)
@@ -135,9 +217,31 @@ namespace TigerTrade.Chart.Indicators.Custom
             return _api.GetMinMax(out min, out max);
         }
 
+        public override List<IndicatorValueInfo> GetValues(int cursorPos)
+        {
+            var info = new List<IndicatorValueInfo>();
+
+            if (cursorPos >= 0)
+            {
+                var d = Canvas.IndexToDate(cursorPos);
+                var v = _api.Get(d);
+
+                var s = Canvas.FormatValue((double)DataProvider.Symbol.GetSize(v));
+
+                info.Add(new IndicatorValueInfo(s, _lineBrush));
+            }
+
+            if (Debug)
+            {
+                foreach (var d in _api.Debug())
+                    info.Add(new IndicatorValueInfo(d.ToString(), Canvas.Theme.ChartFontBrush));
+            }
+
+            return info;
+        }
         public override string ToString()
         {
-            return $"{Name} (Penis)";
+            return $"{Name} ({Entity})";
         }
     }
 }
