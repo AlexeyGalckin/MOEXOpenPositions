@@ -34,7 +34,6 @@ namespace TigerTrade.Chart.Indicators.Custom
             set;
         }
         void Update();
-        void Init();
         void Clear();
         long Get(DateTime time);
         bool GetMinMax(out double min, out double max);
@@ -49,20 +48,61 @@ namespace TigerTrade.Chart.Indicators.Custom
     }
     public class MOEXClient : IMOEXClient
     {
-        public string Passport { get; set; }
-        public bool Legal { get; set; }
-        public string Symbol { get; set; }
-        //
-        static string _base = "https://iss.moex.com/iss/analyticalproducts/futoi/securities/{0}.csv";
+        string _passport;
+        public string Passport
+        {
+            get { return _passport; }
+            set
+            {
+                if (_passport != value)
+                {
+                    _passport = value;
+                    Clear();
+                }
+            }
+        }
+
+        bool _legal;
+        public bool Legal
+        {
+            get { return _legal; }
+            set
+            {
+                if (_legal != value)
+                {
+                    _legal = value;
+                    Clear();
+                }
+            }
+        }
+        string _symbol;
+        public string Symbol
+        {
+            get { return _symbol; }
+            set
+            {
+                if (_symbol != value)
+                {
+                    _symbol = value;
+                    Clear();
+                }
+            }
+        }
         public long Get(DateTime time)
         {
-            if(!_data.Any())
+            if (!_data.Any())
                 return 0;
             //
             var e = new Entry(time, 0);
             //
             return Get(e);
         }
+        public MOEXClient()
+        {
+            Passport = "CWYRf4a4MYR1WzwdjEHKiQUAAAAIk2vp3llqix6hlne9tgCg8dspidbL5rGZgGkTM0HGD8X5_UMjHr-3s3l1nZSWZF1TAwdu1xpIiX2P28GdXg4X5dqx0vVZPcX6D3Cjvh_gNIpFdpUbpU8kUAvNf1i-aXH0zVRctDHR14eWQ71_JRkmtMIq7slboW1KQnm8wiFj-p30Ba4W0";
+            Legal = true;
+        }
+
         long Get(Entry e)
         {
             var i = _data.BinarySearch(e, _comp);
@@ -76,16 +116,11 @@ namespace TigerTrade.Chart.Indicators.Custom
             //
             return _data[i].Item2;
         }
-        public void Init()
-        {
-            _uri = new Uri(String.Format(_base, Symbol));
-            //
-            var d = _uri.Host.ToString();
-            //
-            _cookie = new Cookie("MicexPassportCert", Passport, "/", d);
-        }
         void Parse(Stream s)
         {
+            const int Begin = 14;
+            const int Row = 12;
+            const int End = 11;
             //
             StreamReader r = new StreamReader(s);
             //
@@ -93,41 +128,49 @@ namespace TigerTrade.Chart.Indicators.Custom
             //
             var t = l.Split('\n', ';');
             //
-            var o = Legal ? Row * 2 : Row;
-            //
-            for (var i = t.Length - o - End; i >= Begin; i -= Row * 2)
+            for (var i = t.Length - Row - End; i >= Begin; i -= Row)
             {
-                var diff = Convert.ToInt32(t[i + 6]);
-                var date = Convert.ToDateTime(t[i + 11]);
+                var type = t[i + 5];
                 //
-                if(_last > DateTime.MinValue && _data.Last().Item1 >= date)
+                if (Legal && type != "YUR")
                     continue;
-                //
-                Add(new Entry(date, diff));
-                //
-                if(diff > _max) _max = diff;
-                if(diff < _min) _min = diff;
+                else if (!Legal && type != "FIZ")
+                    continue;
+                else
+                {
+                    var diff = Convert.ToInt32(t[i + 6]);
+                    var date = Convert.ToDateTime(t[i + 2] + ' ' + t[i + 3]);
+                    //
+                    if (date < Last)
+                        continue;
+                    //
+                    Add(new Entry(date, diff));
+                    //
+                    if (diff > _max) _max = diff;
+                    if (diff < _min) _min = diff;
+                }
             }
-            //
-            if(_data.Any())
-                _last = _data.Last().Item1;
         }
         virtual public void Update()
         {
-            var s = _uri.ToString();
+            var s = String.Format(_base, Symbol);
             //
-            if (_last > DateTime.MinValue)
+            if (Last != DateTime.MinValue)
             {
-                if (DateTime.Now - _last >= _interval)
+                if (DateTime.Now - Last >= _interval)
                     s += "?from=" + DateTime.Now.ToString("yyyy-MM-dd");
                 else
                     return;
             }
             //
+            var uri = new Uri(String.Format(_base, Symbol));
+            //
+            var cookie = new Cookie("MicexPassportCert", Passport, "/", uri.Host.ToString());
+            //
             HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(s);
             //
             request.CookieContainer = new CookieContainer();
-            request.CookieContainer.Add(_cookie);
+            request.CookieContainer.Add(cookie);
             //
             HttpWebResponse response = (HttpWebResponse)request.GetResponse();
             //
@@ -157,13 +200,11 @@ namespace TigerTrade.Chart.Indicators.Custom
         public Dictionary<string, string> Debug()
         {
             Dictionary<string, string> d = new Dictionary<string, string>();
-            DebugAppend(d);
-            return d;
-        }
-        public virtual void DebugAppend(Dictionary<string, string> d)
-        {
+
             d["Count"] = _data.Count.ToString();
-            d["Last"] = _last.ToString();
+            d["Last"] = Last.ToString();
+
+            return d;
         }
         virtual public void Clear()
         {
@@ -171,27 +212,20 @@ namespace TigerTrade.Chart.Indicators.Custom
             _max = long.MinValue;
             //
             _data.Clear();
-            _last = DateTime.MinValue;
-            //
-            Symbol = String.Empty;
+        }
+        DateTime Last
+        { 
+            get => _data.Any() ? _data.Last().Item1 : DateTime.MinValue;
         }
         //
-        protected Data _data = new Data();
-        //
-        protected DateTime _last = DateTime.MinValue;
-        //
-        Uri _uri;
-        Cookie _cookie;
+        Data _data = new Data();
         //
         long _min = long.MaxValue;
         long _max = long.MinValue;
         //
-        const int Begin = 14;
-        const int Row = 12;
-        const int End = 11;
-        //
         static Comparator _comp = new Comparator();
-        static TimeSpan _interval = TimeSpan.FromMinutes(5) + TimeSpan.FromSeconds(2);
+        static TimeSpan _interval = TimeSpan.FromMinutes(5) + TimeSpan.FromSeconds(5);
+        //
+        static string _base = "https://iss.moex.com/iss/analyticalproducts/futoi/securities/{0}.csv";
     }
-    //
 }

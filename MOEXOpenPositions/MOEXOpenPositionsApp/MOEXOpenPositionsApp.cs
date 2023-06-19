@@ -12,9 +12,10 @@ namespace TigerTrade.Chart.Indicators.Custom
             cli.Legal = false;
             cli.Symbol = "NG";
             //
-            cli.Init();
             cli.Update();
-
+            //
+            cli.Update();
+            //
             var t = new DateTime(2024, 6, 16, 21, 5, 0);
             var p = cli.Get(t);
         }

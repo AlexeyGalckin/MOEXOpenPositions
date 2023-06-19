@@ -81,41 +81,23 @@ namespace TigerTrade.Chart.Indicators.Custom
                 }
 
                 _api.Passport = value;
-                _changed = true;
-
                 OnPropertyChanged();
             }
         }
 
-        [TypeConverter(typeof(EntityType))]
-        [DataContract(Name = "EntityType", Namespace = "http://schemas.datacontract.org/2004/07/TigerTrade.Chart.Indicators.Custom")]
-        public enum EntityType
-        {
-            [EnumMember(Value = "Individual"), Description("Individuals directed position in contracts")]
-            Individual,
-            [EnumMember(Value = "Legal"), Description("Legal entities directed position in contracts")]
-            Legal
-        }
-
-        bool _changed = true;
-
-        [DataMember(Name = "Entity")]
+        [DataMember(Name = "LegalEntity")]
         [Category("API"), DisplayName("Legal entities")]
-        public EntityType Entity
+        public bool Entity
         {
-            get => _api.Legal ? EntityType.Legal : EntityType.Individual;
+            get => _api.Legal;
             set
             {
-                var b = (value == EntityType.Legal);
-
-                if (_api.Legal == b)
+                if (_api.Legal == value)
                 {
                     return;
                 }
 
-                _api.Legal = b;
-                _changed = true;
-
+                _api.Legal = value;
                 OnPropertyChanged();
             }
         }
@@ -148,10 +130,7 @@ namespace TigerTrade.Chart.Indicators.Custom
         public MOEXOpenPositionsIndicator()
         {
             LineColor = Color.FromArgb(255, 0, 0, 255);
-            LineWidth = 1;
-            //
-            Passport = "CWYRf4a4MYR1WzwdjEHKiQUAAAAIk2vp3llqix6hlne9tgCg8dspidbL5rGZgGkTM0HGD8X5_UMjHr-3s3l1nZSWZF1TAwdu1xpIiX2P28GdXg4X5dqx0vVZPcX6D3Cjvh_gNIpFdpUbpU8kUAvNf1i-aXH0zVRctDHR14eWQ71_JRkmtMIq7slboW1KQnm8wiFj-p30Ba4W0";
-            Entity = EntityType.Legal;
+            LineWidth = 1;    
         }
         protected override void Execute()
         {
@@ -159,18 +138,10 @@ namespace TigerTrade.Chart.Indicators.Custom
             //
             if(exc == "MOEX" && !ClearData)
             {
-                var sym = DataProvider.Symbol.ToString();
-                if (_api.Symbol != sym || _changed)
-                {
-                    _api.Clear();
-                    _api.Symbol = sym;
-                    _api.Init();
-                }
+                _api.Symbol = DataProvider.Symbol.ToString();
                 //
                 _api.Update();
-                _changed = false;
             }
-
         }
 
         public override void Render(DxVisualQueue visual)
@@ -231,6 +202,8 @@ namespace TigerTrade.Chart.Indicators.Custom
                 info.Add(new IndicatorValueInfo(s, _lineBrush));
             }
 
+            info.Add(new IndicatorValueInfo(_api.Legal ? "(Legal)" : "(Individual)", Canvas.Theme.ChartFontBrush));
+
             if (Debug)
             {
                 foreach (var d in _api.Debug())
@@ -238,10 +211,6 @@ namespace TigerTrade.Chart.Indicators.Custom
             }
 
             return info;
-        }
-        public override string ToString()
-        {
-            return $"{Name} ({Entity})";
         }
     }
 }
