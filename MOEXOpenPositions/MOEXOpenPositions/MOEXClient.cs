@@ -191,7 +191,7 @@ namespace TigerTrade.Chart.Indicators.Custom
         const int End = 11;
         //
         static Comparator _comp = new Comparator();
-        static TimeSpan _interval = TimeSpan.FromMinutes(5);
+        static TimeSpan _interval = TimeSpan.FromMinutes(5) + TimeSpan.FromSeconds(2);
     }
     //
 }

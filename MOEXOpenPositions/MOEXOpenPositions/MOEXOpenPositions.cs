@@ -157,7 +157,7 @@ namespace TigerTrade.Chart.Indicators.Custom
         {
             var exc = DataProvider.Symbol.Exchange.ToString();
             //
-            if(exc == "MOEX")
+            if(exc == "MOEX" && !ClearData)
             {
                 var sym = DataProvider.Symbol.ToString();
                 if (_api.Symbol != sym || _changed)
@@ -167,8 +167,8 @@ namespace TigerTrade.Chart.Indicators.Custom
                     _api.Init();
                 }
                 //
-                if (!ClearData)
-                    _api.Update();
+                _api.Update();
+                _changed = false;
             }
 
         }
