@@ -13,6 +13,7 @@ using TigerTrade.Core.Utils.Time;
 using TigerTrade.Dx;
 using TigerTrade.Core.UI.Converters;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace TigerTrade.Chart.Indicators.Custom
 {
@@ -68,36 +69,40 @@ namespace TigerTrade.Chart.Indicators.Custom
             }
         }
 
+        // I don't know why when opening the application object types are still unitialized (i have checked in debugger)
+        static string _passport = "CWYRf4a4MYR1WzwdjEHKiQUAAAAIk2vp3llqix6hlne9tgCg8dspidbL5rGZgGkTM0HGD8X5_UMjHr-3s3l1nZSWZF1TAwdu1xpIiX2P28GdXg4X5dqx0vVZPcX6D3Cjvh_gNIpFdpUbpU8kUAvNf1i-aXH0zVRctDHR14eWQ71_JRkmtMIq7slboW1KQnm8wiFj-p30Ba4W0";
+
         [DataMember(Name = "Passport")]
         [Category("API"), DisplayName("MicexPassportCert")]
         public string Passport
         {
-            get => _api.Passport;
+            get => _passport;
             set
             {
-                if (_api.Passport == value)
+                if (_passport == value)
                 {
                     return;
                 }
 
-                _api.Passport = value;
+                _passport = value;
                 OnPropertyChanged();
             }
         }
 
-        [DataMember(Name = "LegalEntity")]
-        [Category("API"), DisplayName("Legal entities")]
-        public bool Entity
+        bool _legal;
+        [DataMember(Name = "Legal")]
+        [Category("API"), DisplayName("Legal entities positions")]
+        public bool Legal
         {
-            get => _api.Legal;
+            get => _legal;
             set
             {
-                if (_api.Legal == value)
+                if(_legal == value)
                 {
                     return;
                 }
 
-                _api.Legal = value;
+                _legal = value;
                 OnPropertyChanged();
             }
         }
@@ -126,11 +131,13 @@ namespace TigerTrade.Chart.Indicators.Custom
 
         public override bool IntegerValues => true;
 
-        private IMOEXClient _api = new MOEXClient();
+        private IMOEXClient _api;
         public MOEXOpenPositionsIndicator()
         {
-            LineColor = Color.FromArgb(255, 0, 0, 255);
-            LineWidth = 1;    
+            LineColor = Color.FromArgb(255, 0, 255, 255);
+            LineWidth = 3;
+            //
+            _api = new MOEXClient();
         }
         protected override void Execute()
         {
@@ -138,6 +145,9 @@ namespace TigerTrade.Chart.Indicators.Custom
             //
             if(exc == "MOEX" && !ClearData)
             {
+                _api.Passport = Passport;
+                _api.Legal = Legal;
+                //
                 _api.Symbol = DataProvider.Symbol.ToString();
                 //
                 _api.Update();
@@ -179,6 +189,12 @@ namespace TigerTrade.Chart.Indicators.Custom
 
             LineColor = i.LineColor;
             LineWidth = i.LineWidth;
+
+            _api = i._api;
+
+            //Passport = i._passport;
+            Legal =    i._legal;
+            Debug  = i._debug;
 
             base.CopyTemplate(indicator, style);
         }
