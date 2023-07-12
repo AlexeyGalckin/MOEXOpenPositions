@@ -69,8 +69,8 @@ namespace TigerTrade.Chart.Indicators.Custom
             }
         }
 
-        // I don't know why when opening the application object types are still unitialized (i have checked in debugger)
-        static string _passport = "CWYRf4a4MYR1WzwdjEHKiQUAAAAIk2vp3llqix6hlne9tgCg8dspidbL5rGZgGkTM0HGD8X5_UMjHr-3s3l1nZSWZF1TAwdu1xpIiX2P28GdXg4X5dqx0vVZPcX6D3Cjvh_gNIpFdpUbpU8kUAvNf1i-aXH0zVRctDHR14eWQ71_JRkmtMIq7slboW1KQnm8wiFj-p30Ba4W0";
+        // I don't know why when opening the application object types are still unitialized because ctor was not called (i have checked in debugger)
+        string _passport =  null;
 
         [DataMember(Name = "Passport")]
         [Category("API"), DisplayName("MicexPassportCert")]
@@ -79,6 +79,8 @@ namespace TigerTrade.Chart.Indicators.Custom
             get => _passport;
             set
             {
+                // So I'm using this workaround
+                if (_passport == null) _passport = String.Empty;
                 if (_passport == value)
                 {
                     return;
@@ -136,6 +138,8 @@ namespace TigerTrade.Chart.Indicators.Custom
         {
             LineColor = Color.FromArgb(255, 0, 255, 255);
             LineWidth = 3;
+            //
+            if (_passport == null) _passport = String.Empty;
             //
             _api = new MOEXClient();
         }
